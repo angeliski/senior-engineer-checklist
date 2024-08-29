@@ -1,1 +1,151 @@
-Head over to <a href="https://littleblah.com">the main site</a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senior Engineer Checklist</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        input, select {
+            padding: 0.5rem;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            text-align: left;
+            padding: 0.5rem;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            border-bottom: 2px solid #ddd;
+        }
+        #loading {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Senior Engineer Checklist</h1>
+    <div class="filters">
+        <input type="text" id="searchInput" placeholder="Search tasks...">
+        <select id="categoryFilter">
+            <option value="">All Categories</option>
+        </select>
+        <select id="effortFilter">
+            <option value="">All Effort Levels</option>
+        </select>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Task</th>
+                <th>Category</th>
+                <th>Effort</th>
+                <th>Career Impact</th>
+                <th>Company Impact</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+        </tbody>
+    </table>
+    <div id="loading">Loading data...</div>
+
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const effortFilter = document.getElementById('effortFilter');
+        const tableBody = document.getElementById('tableBody');
+        const loadingDiv = document.getElementById('loading');
+
+        let data = [];
+
+        async function fetchData() {
+            try {
+                const response = await fetch('https://raw.githubusercontent.com/angeliski/senior-engineer-checklist/master/senior-engineer-checklist.json');
+                const jsonData = await response.json();
+                data = jsonData.data;
+                loadingDiv.style.display = 'none';
+                populateFilters();
+                renderTable(data);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                loadingDiv.textContent = 'Error loading data. Please try again later.';
+            }
+        }
+
+        function populateFilters() {
+            const categories = [...new Set(data.map(item => item.category))];
+            const efforts = [...new Set(data.map(item => item.effort))];
+
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                categoryFilter.appendChild(option);
+            });
+
+            efforts.forEach(effort => {
+                const option = document.createElement('option');
+                option.value = effort;
+                option.textContent = effort;
+                effortFilter.appendChild(option);
+            });
+        }
+
+        function filterData() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedCategory = categoryFilter.value;
+            const selectedEffort = effortFilter.value;
+
+            const filteredData = data.filter(item =>
+                item.task.toLowerCase().includes(searchTerm) &&
+                (selectedCategory === '' || item.category === selectedCategory) &&
+                (selectedEffort === '' || item.effort === selectedEffort)
+            );
+
+            renderTable(filteredData);
+        }
+
+        function renderTable(items) {
+            tableBody.innerHTML = '';
+            items.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.task}</td>
+                    <td>${item.category}</td>
+                    <td>${item.effort}</td>
+                    <td>${item.caimpact}</td>
+                    <td>${item.coimpact}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        searchInput.addEventListener('input', filterData);
+        categoryFilter.addEventListener('change', filterData);
+        effortFilter.addEventListener('change', filterData);
+
+        fetchData();
+    </script>
+</body>
+</html>
